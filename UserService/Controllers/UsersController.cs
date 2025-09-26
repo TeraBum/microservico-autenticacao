@@ -2,8 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using UserService.DTOs;
 using UserService.Services;
 
-namespace UserService.Controllers
-{
     [ApiController]
     [Route("api/[controller]")]
     public class UsersController : ControllerBase
