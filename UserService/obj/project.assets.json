@@ -2459,11 +2459,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Redseek\\Documents\\Faculdade\\6º semestre\\UserAuthenticator\\UserService\\UserService.csproj",
+      "projectUniqueName": "C:\\Users\\Redseek\\Documents\\Faculdade\\6º semestre\\User\\UserService\\UserService.csproj",
       "projectName": "UserService",
-      "projectPath": "C:\\Users\\Redseek\\Documents\\Faculdade\\6º semestre\\UserAuthenticator\\UserService\\UserService.csproj",
+      "projectPath": "C:\\Users\\Redseek\\Documents\\Faculdade\\6º semestre\\User\\UserService\\UserService.csproj",
       "packagesPath": "C:\\Users\\Redseek\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Redseek\\Documents\\Faculdade\\6º semestre\\UserAuthenticator\\UserService\\obj\\",
+      "outputPath": "C:\\Users\\Redseek\\Documents\\Faculdade\\6º semestre\\User\\UserService\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

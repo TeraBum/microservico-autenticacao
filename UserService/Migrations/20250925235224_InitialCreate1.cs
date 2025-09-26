@@ -17,7 +17,7 @@ namespace UserService.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Nome = table.Column<string>(type: "text", nullable: false),
                     Email = table.Column<string>(type: "text", nullable: false),
-                    SenhaHash = table.Column<string>(type: "text", nullable: false),
+                    SenhaHash = table.Column<string>(type: "text", nullable: true),
                     Role = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>

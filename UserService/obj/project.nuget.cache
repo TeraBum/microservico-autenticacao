@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "OrcQ2ALqIS46GGpAGG//rbjaYz3ywM1doqoQ9Y1oDZK8a+LjN6Vx8JXyI/gw37qUUkpqk76bwLisKJBEVewLXA==",
+  "dgSpecHash": "/fyBD1e0vKh0q6BAPjaj8i1t30sVsii0ksnajuTHn8WOt3Jvn7trEH8nwJmD7FKq/Ki3ME6LJ6b+HVitRyQP4A==",
   "success": true,
-  "projectFilePath": "C:\\Users\\Redseek\\Documents\\Faculdade\\6º semestre\\UserAuthenticator\\UserService\\UserService.csproj",
+  "projectFilePath": "C:\\Users\\Redseek\\Documents\\Faculdade\\6º semestre\\User\\UserService\\UserService.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Redseek\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
     "C:\\Users\\Redseek\\.nuget\\packages\\humanizer.core\\2.8.26\\humanizer.core.2.8.26.nupkg.sha512",
