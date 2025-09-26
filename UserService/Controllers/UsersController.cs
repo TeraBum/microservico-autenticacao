@@ -6,6 +6,7 @@ using UserService.DTOs;
 using UserService.Models;
 using UserService.Models.DTOs;
 using UserService.Services;
+using UserService.Configurations;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -35,7 +36,7 @@ namespace UserService.Controllers
                 Nome = request.Nome,
                 Email = request.Email,
                 Senha = request.Senha,
-                Role = request.Role
+                Role = UserRoles.User // sempre nasce como User
             };
 
             var token = _userService.Register(dto);
@@ -64,7 +65,7 @@ namespace UserService.Controllers
         }
 
         // GET: api/users
-        [Authorize(Roles = "Administrador")]
+        [Authorize(Roles = UserRoles.Admin)]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserResponse>>> GetAllUsers()
         {
@@ -120,15 +121,14 @@ namespace UserService.Controllers
                 user.SenhaHash = BCrypt.Net.BCrypt.HashPassword(request.Senha);
             }
 
-            user.Role = request.Role;
-
+            // 🚫 Role NÃO é alterada aqui!
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
         // DELETE: api/users/{id}
-        [Authorize(Roles = "Administrador")]
+        [Authorize(Roles = UserRoles.Admin)]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
@@ -140,6 +140,24 @@ namespace UserService.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        // PUT: api/users/{id}/role (apenas Admin pode promover/rebaixar)
+        [Authorize(Roles = UserRoles.Admin)]
+        [HttpPut("{id}/role")]
+        public async Task<IActionResult> UpdateUserRole(int id, [FromBody] string newRole)
+        {
+            if (!UserRoles.All.Contains(newRole))
+                return BadRequest("Role inválida. Roles permitidas: " + string.Join(", ", UserRoles.All));
+
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+                return NotFound();
+
+            user.Role = newRole;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = $"Usuário {user.Email} agora é {newRole}" });
         }
     }
 }
