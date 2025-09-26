@@ -1,8 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using UserService.Data;
+using UserService.DTOs;
 using UserService.Models;
 using UserService.Models.DTOs;
+using UserService.Services;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,67 +16,55 @@ namespace UserService.Controllers
     [Route("api/[controller]")]
     public class UsersController : ControllerBase
     {
+        private readonly IUserService _userService;
         private readonly AppDbContext _context;
 
-        public UsersController(AppDbContext context)
+        public UsersController(IUserService userService, AppDbContext context)
         {
+            _userService = userService;
             _context = context;
         }
 
         // POST: api/users/register
+        [AllowAnonymous]
         [HttpPost("register")]
-        public async Task<IActionResult> Register(UserRegisterRequest request)
+        public IActionResult Register(UserRegisterRequest request)
         {
-            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
-            if (existingUser != null)
-                return BadRequest("Usuário com este e-mail já existe.");
-
-            var newUser = new User
+            var dto = new UserRegisterDto
             {
                 Nome = request.Nome,
                 Email = request.Email,
-                SenhaHash = BCrypt.Net.BCrypt.HashPassword(request.Senha),
+                Senha = request.Senha,
                 Role = request.Role
             };
 
-            _context.Users.Add(newUser);
-            await _context.SaveChangesAsync();
+            var token = _userService.Register(dto);
+            if (token == null)
+                return BadRequest("Usuário com este e-mail já existe.");
 
-            var userResponse = new UserResponse
-            {
-                Id = newUser.Id,
-                Nome = newUser.Nome,
-                Email = newUser.Email,
-                Role = newUser.Role
-            };
-
-            return CreatedAtAction(nameof(GetUserById), new { id = newUser.Id }, userResponse);
+            return Ok(new { token });
         }
 
         // POST: api/users/login
+        [AllowAnonymous]
         [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginRequest request)
+        public IActionResult Login(LoginRequest request)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
-            if (user == null || !BCrypt.Net.BCrypt.Verify(request.Senha, user.SenhaHash))
-                return Unauthorized("Credenciais inválidas.");
-
-            var userResponse = new UserResponse
+            var dto = new UserLoginDto
             {
-                Id = user.Id,
-                Nome = user.Nome,
-                Email = user.Email,
-                Role = user.Role
+                Email = request.Email,
+                Senha = request.Senha
             };
 
-            return Ok(new
-            {
-                message = "Login realizado com sucesso.",
-                user = userResponse
-            });
+            var token = _userService.Login(dto);
+            if (token == null)
+                return Unauthorized("Credenciais inválidas.");
+
+            return Ok(new { token });
         }
 
         // GET: api/users
+        [Authorize(Roles = "Administrador")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserResponse>>> GetAllUsers()
         {
@@ -90,6 +81,7 @@ namespace UserService.Controllers
         }
 
         // GET: api/users/{id}
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<UserResponse>> GetUserById(int id)
         {
@@ -109,6 +101,7 @@ namespace UserService.Controllers
         }
 
         // PUT: api/users/{id}
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(int id, UserUpdateRequest request)
         {
@@ -135,6 +128,7 @@ namespace UserService.Controllers
         }
 
         // DELETE: api/users/{id}
+        [Authorize(Roles = "Administrador")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
