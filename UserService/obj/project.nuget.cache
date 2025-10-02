@@ -1,10 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "/fyBD1e0vKh0q6BAPjaj8i1t30sVsii0ksnajuTHn8WOt3Jvn7trEH8nwJmD7FKq/Ki3ME6LJ6b+HVitRyQP4A==",
+  "dgSpecHash": "aDm5V0yZzHxu2YJj537yxC1epm1IEjBwpjhwXswTMnwo0thigXCsrzX6V9ho/Jd4D8lV/05kI0WqZAUtLH7EcA==",
   "success": true,
   "projectFilePath": "C:\\Users\\Redseek\\Documents\\Faculdade\\6º semestre\\User\\UserService\\UserService.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Redseek\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
+    "C:\\Users\\Redseek\\.nuget\\packages\\dotenv.net\\4.0.0\\dotenv.net.4.0.0.nupkg.sha512",
     "C:\\Users\\Redseek\\.nuget\\packages\\humanizer.core\\2.8.26\\humanizer.core.2.8.26.nupkg.sha512",
     "C:\\Users\\Redseek\\.nuget\\packages\\microsoft.aspnetcore.authentication.jwtbearer\\6.0.5\\microsoft.aspnetcore.authentication.jwtbearer.6.0.5.nupkg.sha512",
     "C:\\Users\\Redseek\\.nuget\\packages\\microsoft.aspnetcore.authorization\\6.0.5\\microsoft.aspnetcore.authorization.6.0.5.nupkg.sha512",

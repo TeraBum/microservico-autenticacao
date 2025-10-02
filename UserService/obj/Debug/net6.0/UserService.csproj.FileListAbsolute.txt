@@ -144,3 +144,4 @@ C:\Users\Redseek\Documents\Faculdade\6º semestre\User\UserService\obj\Debug\net
 C:\Users\Redseek\Documents\Faculdade\6º semestre\User\UserService\obj\Debug\net6.0\UserService.genruntimeconfig.cache
 C:\Users\Redseek\Documents\Faculdade\6º semestre\User\UserService\obj\Debug\net6.0\ref\UserService.dll
 C:\Users\Redseek\Documents\Faculdade\6º semestre\User\UserService\obj\Debug\net6.0\UserService.csproj.CopyComplete
+C:\Users\Redseek\Documents\Faculdade\6º semestre\User\UserService\bin\Debug\net6.0\dotenv.net.dll

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -6,8 +6,15 @@ using UserService.Data;
 using UserService.Repositories;
 using UserService.Services;
 using UserService.Configurations;
+using dotenv.net; // pacote para .env
+
+
 
 var builder = WebApplication.CreateBuilder(args);
+
+// 🔹 carrega variáveis do .env
+DotEnv.Load();
+builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
