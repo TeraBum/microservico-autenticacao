@@ -10,6 +10,7 @@ using UserService.Configurations;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Security.Claims;
 
 namespace UserService.Controllers
 {
@@ -81,11 +82,21 @@ namespace UserService.Controllers
             return Ok(response);
         }
 
-        // GET: api/users/{id}
         [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<UserResponse>> GetUserById(int id)
         {
+            var idClaim = User.FindFirst("id")?.Value;
+            if (idClaim == null)
+                return Unauthorized("Token inválido: sem ID");
+
+            var userIdFromToken = int.Parse(idClaim);
+            var role = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            // Se não for Admin, só pode acessar o próprio perfil
+            if (role != UserRoles.Admin && userIdFromToken != id)
+                return Forbid();
+
             var user = await _context.Users.FindAsync(id);
             if (user == null)
                 return NotFound();
@@ -101,11 +112,19 @@ namespace UserService.Controllers
             return Ok(userResponse);
         }
 
+
+
         // PUT: api/users/{id}
         [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(int id, UserUpdateRequest request)
         {
+            var loggedUserId = int.Parse(User.FindFirst("id")?.Value ?? "0");
+            var loggedUserRole = User.FindFirst("role")?.Value;
+
+            if (loggedUserRole != UserRoles.Admin && loggedUserId != id)
+                return Forbid();
+
             if (id != request.Id)
                 return BadRequest("ID do usuário não corresponde.");
 
@@ -128,10 +147,16 @@ namespace UserService.Controllers
         }
 
         // DELETE: api/users/{id}
-        [Authorize(Roles = UserRoles.Admin)]
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
+            var loggedUserId = int.Parse(User.FindFirst("id")?.Value ?? "0");
+            var loggedUserRole = User.FindFirst("role")?.Value;
+
+            if (loggedUserRole != UserRoles.Admin && loggedUserId != id)
+                return Forbid();
+
             var user = await _context.Users.FindAsync(id);
             if (user == null)
                 return NotFound();
@@ -139,7 +164,7 @@ namespace UserService.Controllers
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(new { message = $"Usuário {user.Email} foi removido com sucesso." });
         }
 
         // PUT: api/users/{id}/role (apenas Admin pode promover/rebaixar)

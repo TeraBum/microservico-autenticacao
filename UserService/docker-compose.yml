@@ -1,0 +1,11 @@
+﻿
+services:
+  userservice:
+    build: .
+    container_name: userservice
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env   # pega as variáveis daqui
+    environment:
+      - ConnectionStrings__DefaultConnection=User Id=postgres.smjdaavxsnbmrdrvejsu;Password=S3nhaS3gur@:(;Server=aws-1-sa-east-1.pooler.supabase.com;Port=6543;Database=postgres
