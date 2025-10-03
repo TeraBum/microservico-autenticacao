@@ -8,6 +8,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace UserService.Services
 {
@@ -22,9 +23,9 @@ namespace UserService.Services
             _jwtSettings = jwtSettings.Value;
         }
 
-        public string Register(UserRegisterDto dto)
+        public async Task<string?> Register(UserRegisterDto dto)
         {
-            var existingUser = _repository.GetByEmail(dto.Email);
+            var existingUser = await _repository.GetByEmailAsync(dto.Email);
             if (existingUser != null) return null;
 
             var user = new User
@@ -35,14 +36,17 @@ namespace UserService.Services
                 Role = dto.Role
             };
 
-            _repository.Add(user);
+            await _repository.AddAsync(user);
+            await _repository.SaveChangesAsync();
+
             return GenerateToken(user);
         }
 
-        public string Login(UserLoginDto dto)
+        public async Task<string?> Login(UserLoginDto dto)
         {
-            var user = _repository.GetByEmail(dto.Email);
-            if (user == null || !BcryptHelper.VerifyPassword(dto.Senha, user.SenhaHash)) return null;
+            var user = await _repository.GetByEmailAsync(dto.Email);
+            if (user == null || !BcryptHelper.VerifyPassword(dto.Senha, user.SenhaHash))
+                return null;
 
             return GenerateToken(user);
         }

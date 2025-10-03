@@ -1,11 +1,11 @@
 using UserService.DTOs;
-using UserService.Models;
+using System.Threading.Tasks;
 
 namespace UserService.Services
 {
     public interface IUserService
     {
-        string Register(UserRegisterDto dto);
-        string Login(UserLoginDto dto);
+        Task<string?> Register(UserRegisterDto dto);
+        Task<string?> Login(UserLoginDto dto);
     }
 }

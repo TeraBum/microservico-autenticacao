@@ -29,7 +29,7 @@ namespace UserService.Controllers
         // POST: api/users/register
         [AllowAnonymous]
         [HttpPost("register")]
-        public IActionResult Register(UserRegisterRequest request)
+        public async Task<IActionResult> Register(UserRegisterRequest request)
         {
             var dto = new UserRegisterDto
             {
@@ -39,7 +39,7 @@ namespace UserService.Controllers
                 Role = UserRoles.User // sempre nasce como User
             };
 
-            var token = _userService.Register(dto);
+            var token = await _userService.Register(dto);
             if (token == null)
                 return BadRequest("Usuário com este e-mail já existe.");
 
@@ -49,7 +49,7 @@ namespace UserService.Controllers
         // POST: api/users/login
         [AllowAnonymous]
         [HttpPost("login")]
-        public IActionResult Login(LoginRequest request)
+        public async Task<IActionResult> Login(LoginRequest request)
         {
             var dto = new UserLoginDto
             {
@@ -57,7 +57,7 @@ namespace UserService.Controllers
                 Senha = request.Senha
             };
 
-            var token = _userService.Login(dto);
+            var token = await _userService.Login(dto);
             if (token == null)
                 return Unauthorized("Credenciais inválidas.");
 
@@ -160,4 +160,4 @@ namespace UserService.Controllers
             return Ok(new { message = $"Usuário {user.Email} agora é {newRole}" });
         }
     }
-}
+}

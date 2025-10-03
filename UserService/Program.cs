@@ -51,7 +51,11 @@ builder.Services.AddSwaggerGen(c =>
 
 // 🔹 Configuração do EF Core com PostgreSQL
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        o => o.CommandTimeout(180) // 3 minutos
+    )
+);
 
 // 🔹 Configuração do JWT
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));

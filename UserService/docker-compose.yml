@@ -8,4 +8,4 @@ services:
     env_file:
       - .env   # pega as variáveis daqui
     environment:
-      - ConnectionStrings__DefaultConnection=User Id=postgres.smjdaavxsnbmrdrvejsu;Password=S3nhaS3gur@:(;Server=aws-1-sa-east-1.pooler.supabase.com;Port=6543;Database=postgres
+      - ConnectionStrings__DefaultConnection=User Id=postgres.smjdaavxsnbmrdrvejsu;Password=S3nhaS3gur@:(;Server=aws-1-sa-east-1.pooler.supabase.com;Port=5432;Database=postgres

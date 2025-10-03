@@ -1,10 +1,12 @@
 using UserService.Models;
+using System.Threading.Tasks;
 
 namespace UserService.Repositories
 {
     public interface IUserRepository
     {
-        User GetByEmail(string email);
-        void Add(User user);
+        Task<User?> GetByEmailAsync(string email);
+        Task AddAsync(User user);
+        Task SaveChangesAsync();
     }
 }
