@@ -34,7 +34,7 @@ namespace UserService.Controllers
             var dto = new UserRegisterDto
             {
                 Nome = request.Nome,
-                Email = request.Email,
+                Email = request.Email.ToLowerInvariant(),
                 Senha = request.Senha,
                 Role = UserRoles.User // sempre nasce como User
             };
@@ -53,7 +53,7 @@ namespace UserService.Controllers
         {
             var dto = new UserLoginDto
             {
-                Email = request.Email,
+                Email = request.Email.ToLowerInvariant(),
                 Senha = request.Senha
             };
 
@@ -90,6 +90,10 @@ namespace UserService.Controllers
             if (user == null)
                 return NotFound();
 
+            var currentUserEmail = User.Identity?.Name;
+            if (!User.IsInRole(UserRoles.Admin) && user.Email != currentUserEmail)
+                return Forbid();
+
             var userResponse = new UserResponse
             {
                 Id = user.Id,
@@ -113,28 +117,45 @@ namespace UserService.Controllers
             if (user == null)
                 return NotFound();
 
+            var currentUserEmail = User.Identity?.Name;
+            if (!User.IsInRole(UserRoles.Admin) && user.Email != currentUserEmail)
+                return Forbid();
+
             user.Nome = request.Nome;
-            user.Email = request.Email;
+            user.Email = request.Email.ToLowerInvariant();
 
             if (!string.IsNullOrEmpty(request.Senha))
             {
+                // 🔐 Usuário comum precisa informar senha atual
+                if (!User.IsInRole(UserRoles.Admin))
+                {
+                    if (string.IsNullOrEmpty(request.SenhaAtual) ||
+                        !BCrypt.Net.BCrypt.Verify(request.SenhaAtual, user.SenhaHash))
+                    {
+                        return BadRequest("Senha atual inválida.");
+                    }
+                }
+
                 user.SenhaHash = BCrypt.Net.BCrypt.HashPassword(request.Senha);
             }
 
-            // 🚫 Role NÃO é alterada aqui!
             await _context.SaveChangesAsync();
-
             return NoContent();
         }
 
         // DELETE: api/users/{id}
-        [Authorize(Roles = UserRoles.Admin)]
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
             var user = await _context.Users.FindAsync(id);
             if (user == null)
                 return NotFound();
+
+            var currentUserEmail = User.Identity?.Name;
+
+            if (!User.IsInRole(UserRoles.Admin) && user.Email != currentUserEmail)
+                return Forbid();
 
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();

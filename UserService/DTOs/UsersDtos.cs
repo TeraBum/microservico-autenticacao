@@ -31,6 +31,7 @@
         public int Id { get; set; }
         public string Nome { get; set; }
         public string Email { get; set; }
+        public string? SenhaAtual { get; set; } // usado só na troca de senha
         public string? Senha { get; set; }  // senha opcional na atualização
         public string Role { get; set; }
     }

@@ -1,4 +1,4 @@
-using UserService.DTOs;
+﻿using UserService.DTOs;
 using UserService.Models;
 using UserService.Repositories;
 using UserService.Configurations;
@@ -23,6 +23,7 @@ namespace UserService.Services
             _jwtSettings = jwtSettings.Value;
         }
 
+        // 🔹 Registro de usuário
         public async Task<string?> Register(UserRegisterDto dto)
         {
             var existingUser = await _repository.GetByEmailAsync(dto.Email);
@@ -31,7 +32,7 @@ namespace UserService.Services
             var user = new User
             {
                 Nome = dto.Nome,
-                Email = dto.Email,
+                Email = dto.Email.ToLowerInvariant(), // garante lowercase
                 SenhaHash = BcryptHelper.HashPassword(dto.Senha),
                 Role = dto.Role
             };
@@ -42,15 +43,18 @@ namespace UserService.Services
             return GenerateToken(user);
         }
 
+        // 🔹 Login de usuário
         public async Task<string?> Login(UserLoginDto dto)
         {
-            var user = await _repository.GetByEmailAsync(dto.Email);
+            var emailNormalized = dto.Email.ToLowerInvariant();
+            var user = await _repository.GetByEmailAsync(emailNormalized);
             if (user == null || !BcryptHelper.VerifyPassword(dto.Senha, user.SenhaHash))
                 return null;
 
             return GenerateToken(user);
         }
 
+        // 🔹 Geração de token JWT
         private string GenerateToken(User user)
         {
             var claims = new[]
@@ -66,7 +70,7 @@ namespace UserService.Services
                 issuer: _jwtSettings.Issuer,
                 audience: _jwtSettings.Audience,
                 claims: claims,
-                expires: DateTime.Now.AddMinutes(_jwtSettings.ExpirationMinutes),
+                expires: DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes),
                 signingCredentials: creds
             );
 

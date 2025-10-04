@@ -3,11 +3,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using System.Security.Claims;
 using UserService.Data;
 using UserService.Repositories;
 using UserService.Services;
 using UserService.Configurations;
-using dotenv.net; // pacote DotEnv.Net
+using dotenv.net;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,16 +54,17 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        o => o.CommandTimeout(180) // 3 minutos
+        o => o.CommandTimeout(180)
     )
 );
 
-// 🔹 Configuração do JWT
+// 🔹 Configuração dos serviços
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserServiceImpl>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 
+// 🔹 Configuração do JWT com RoleClaimType
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -75,20 +77,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = jwtSettings.Issuer,
             ValidAudience = jwtSettings.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
+            RoleClaimType = ClaimTypes.Role // << garante que ASP.NET reconheça as roles
         };
     });
 
 var app = builder.Build();
 
-// 🔹 Ativa Swagger
+// 🔹 Swagger
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "UserService API v1");
 });
 
-// 🔹 Middlewares de autenticação/autorização
+// 🔹 Middlewares
 app.UseAuthentication();
 app.UseAuthorization();
 
