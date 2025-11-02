@@ -16,10 +16,11 @@ var builder = WebApplication.CreateBuilder(args);
 DotEnv.Load();
 builder.Configuration.AddEnvironmentVariables();
 
+// 🔹 Adiciona controllers
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-// 🔹 Configuração do Swagger com suporte a JWT
+// 🔹 Swagger com JWT
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "UserService API", Version = "v1" });
@@ -39,18 +40,14 @@ builder.Services.AddSwaggerGen(c =>
         {
             new OpenApiSecurityScheme
             {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
             },
             new string[] {}
         }
     });
 });
 
-// 🔹 Configuração do EF Core com PostgreSQL
+// 🔹 EF Core com PostgreSQL
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
@@ -58,13 +55,13 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     )
 );
 
-// 🔹 Configuração dos serviços
+// 🔹 Serviços
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserServiceImpl>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 
-// 🔹 Configuração do JWT com RoleClaimType
+// 🔹 JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -78,20 +75,40 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = jwtSettings.Issuer,
             ValidAudience = jwtSettings.Audience,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
-            RoleClaimType = ClaimTypes.Role // << garante que ASP.NET reconheça as roles
+            RoleClaimType = ClaimTypes.Role
         };
     });
 
-var app = builder.Build();
-
-// 🔹 Swagger
-app.UseSwagger();
-app.UseSwaggerUI(c =>
+// 🔹 CORS — permite frontend local e Codespaces
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+builder.Services.AddCors(options =>
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "UserService API v1");
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+        policy =>
+        {
+            policy
+                .WithOrigins(
+                    "http://localhost:5173", // Vite local
+                    "http://localhost:3000", // React local
+                    "https://organic-invention-rjg4r76wx66f9v-5173.app.github.dev" // Codespaces
+                )
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        });
 });
 
+var app = builder.Build();
+
 // 🔹 Middlewares
+
+// Swagger
+app.UseSwagger();
+app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "UserService API v1"));
+
+// CORS (antes de Auth)
+app.UseCors(MyAllowSpecificOrigins);
+
 app.UseAuthentication();
 app.UseAuthorization();
 
