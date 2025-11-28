@@ -12,101 +12,132 @@ using dotenv.net;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 🔹 Carrega variáveis do .env
+// Carrega .env (opcional)
 DotEnv.Load();
-builder.Configuration.AddEnvironmentVariables();
 
-// 🔹 Adiciona controllers
+// -----------------------------------------------------
+// 🔥 1. Carrega JWT Settings a partir das environment vars
+// -----------------------------------------------------
+builder.Services.Configure<JwtSettings>(options =>
+{
+    options.SecretKey = Environment.GetEnvironmentVariable("JWTSETTINGS__SECRETKEY")
+                      ?? Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
+                      ?? throw new Exception("JWT secret não encontrado!");
+
+    options.Issuer = Environment.GetEnvironmentVariable("JWTSETTINGS__ISSUER") ?? "UserService";
+    options.Audience = Environment.GetEnvironmentVariable("JWTSETTINGS__AUDIENCE") ?? "UserClient";
+
+    options.ExpirationMinutes = int.Parse(
+        Environment.GetEnvironmentVariable("JWTSETTINGS__EXPIRATIONMINUTES") ?? "60"
+    );
+});
+
+// -----------------------------------------------------
+// 🔥 2. PEGA A CONNECTION STRING DIRETO DA ENV VARIABLE
+// -----------------------------------------------------
+var connectionString =
+    Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__DEFAULTCONNECTION")
+    ?? throw new Exception("CONNECTIONSTRINGS__DEFAULTCONNECTION NÃO encontrada!");
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+    options.UseNpgsql(connectionString);
+});
+
+// -----------------------------------------------------
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-// 🔹 Swagger com JWT
-builder.Services.AddSwaggerGen(c =>
+// -----------------------------------------------------
+// 🔥 Swagger com JWT (apenas dev)
+// -----------------------------------------------------
+if (builder.Environment.IsDevelopment())
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "UserService API", Version = "v1" });
-
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    builder.Services.AddSwaggerGen(c =>
     {
-        Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
-        In = ParameterLocation.Header,
-        Description = "Digite: Bearer {seu_token}"
-    });
+        c.SwaggerDoc("v1", new OpenApiInfo { Title = "UserService API", Version = "v1" });
 
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
+        c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
         {
-            new OpenApiSecurityScheme
+            Name = "Authorization",
+            Type = SecuritySchemeType.ApiKey,
+            Scheme = "Bearer",
+            BearerFormat = "JWT",
+            In = ParameterLocation.Header,
+            Description = "Digite: Bearer {token}"
+        });
+
+        c.AddSecurityRequirement(new OpenApiSecurityRequirement
+        {
             {
-                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
-            },
-            new string[] {}
-        }
+                new OpenApiSecurityScheme
+                {
+                    Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+                },
+                new string[] {}
+            }
+        });
     });
-});
+}
 
-// 🔹 EF Core com PostgreSQL
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        o => o.CommandTimeout(180)
-    )
-);
+// -----------------------------------------------------
+// 🔥 Autenticação JWT 100% garantida com env vars
+// -----------------------------------------------------
+var jwtSecret =
+    Environment.GetEnvironmentVariable("JWTSETTINGS__SECRETKEY")
+    ?? Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
+    ?? throw new Exception("Nenhuma chave JWT encontrada!");
 
-// 🔹 Serviços
-builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IUserService, UserServiceImpl>();
-builder.Services.AddScoped<ITokenService, TokenService>();
-
-// 🔹 JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = true,
-            ValidateAudience = true,
+            ValidateIssuer = false,
+            ValidateAudience = false,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtSettings.Issuer,
-            ValidAudience = jwtSettings.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
             RoleClaimType = ClaimTypes.Role
         };
     });
 
-// 🔹 CORS — permite frontend local e Codespaces
+// -----------------------------------------------------
+// Serviços
+// -----------------------------------------------------
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, UserServiceImpl>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+
+// -----------------------------------------------------
+// CORS
+// -----------------------------------------------------
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(name: MyAllowSpecificOrigins,
-        policy =>
-        {
-            policy
-                .WithOrigins(
-                    "http://localhost:5173", // Vite local
-                    "http://localhost:3000", // React local
-                    "https://organic-invention-rjg4r76wx66f9v-5173.app.github.dev" // Codespaces
-                )
-                .AllowAnyHeader()
-                .AllowAnyMethod()
-                .AllowCredentials();
-        });
+    options.AddPolicy(MyAllowSpecificOrigins, policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://localhost:5173",
+                "http://localhost:3000",
+                "https://*.github.dev"
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
 });
 
+// -----------------------------------------------------
 var app = builder.Build();
 
-// 🔹 Middlewares
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
-// Swagger
-app.UseSwagger();
-app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "UserService API v1"));
-
-// CORS (antes de Auth)
 app.UseCors(MyAllowSpecificOrigins);
 
 app.UseAuthentication();

@@ -1,29 +1,25 @@
-﻿# Etapa de build com SDK 6.0
+﻿# Etapa de build
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
 
-# Instalar dependências para SSL (necessário para Supabase/Postgres)
-RUN apt-get update && apt-get install -y libssl-dev ca-certificates && update-ca-certificates
-
-# Copiar csproj(s) e restaurar (melhora cache)
+# Copia o csproj e restaura dependências
 COPY *.csproj ./
 RUN dotnet restore
 
-# Copiar todo o código e publicar
+# Copia todo o código e publica
 COPY . ./
 RUN dotnet publish -c Release -o /app
 
-# Imagem final menor com runtime 6.0
-FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS runtime
+# Etapa de runtime
+FROM mcr.microsoft.com/dotnet/aspnet:6.0
 WORKDIR /app
 
-# Instalar suporte a SSL no runtime também
-RUN apt-get update && apt-get install -y libssl-dev ca-certificates && update-ca-certificates
-
+# Copia os arquivos publicados da etapa de build
 COPY --from=build /app .
 
-# Variável padrão para a porta
-ENV ASPNETCORE_URLS=http://+:5000
-EXPOSE 5000
+# Expõe a porta que o container vai usar
+EXPOSE 80
 
+# Ajuste aqui para o DLL correto gerado no build
+# Troque 'UserService.dll' pelo nome exato do seu projeto/dll
 ENTRYPOINT ["dotnet", "UserService.dll"]

@@ -1,11 +1,12 @@
-﻿
+﻿version: '3.9'
+
 services:
   userservice:
     build: .
     container_name: userservice
     ports:
-      - "5000:5000"
+      - "5000:80"
     env_file:
-      - .env   # pega as variáveis daqui
+      - .env
     environment:
-      - ConnectionStrings__DefaultConnection=User Id=postgres.smjdaavxsnbmrdrvejsu;Password=S3nhaS3gur@:(;Server=aws-1-sa-east-1.pooler.supabase.com;Port=5432;Database=postgres
+      ASPNETCORE_ENVIRONMENT: Development
